@@ -134,7 +134,7 @@ class RandomPlayer extends Agent {
 	}
 }
 
-class EA extends Agent {
+class EA_pro extends Agent {
 	board;				//Tablero
 	colorJugador;		//Color del jugador
 	movVictoria;		//Fichas en linea  x ganar (k)
@@ -158,20 +158,60 @@ class EA extends Agent {
 	compute(tablero, time) {
 		this.tiempo = time
 		this.movPosibles = this.board.valid_moves(tablero)
-		
+
 		//Logica del programa
 		var startT = Date.now()
 		var mov = this.movPosibles[Math.floor(this.movPosibles.length * Math.random())]
+		for (var i = 0; i < 99999999; i++) { }
 		var endT = Date.now()
-		
+
 		//Prints
-		console.log('Color: ' + this.colorJugador, '\nTiempo: '+ this.tiempo, '\nPosibles: '+this.movPosibles);
-		console.log('Mejor movimiento: '+mov);
-		console.log('Tiempo requerido: '+ (endT - startT), 'Tiempo restante: '+ (this.tiempo - (endT - startT)))
+		console.log('Color: ' + this.colorJugador, '\nTiempo: ' + this.tiempo, '\nPosibles: ' + this.movPosibles);
+		console.log('Mejor movimiento: ' + mov);
+		console.log('Tiempo requerido: ' + (endT - startT), 'Tiempo restante: ' + (this.tiempo - (endT - startT)))
 		console.log(tablero);
 		return mov;
 	}
+}
 
+class EA_random extends Agent {
+	board;				//Tablero
+	colorJugador;		//Color del jugador
+	movVictoria;		//Fichas en linea  x ganar (k)
+	tamTablero;			//Tamaño tablero
+	movPosibles = [];	//Movimientos posibles
+	tiempo;				//Tiempo disponible
+
+	constructor() {
+		super()
+		this.board = new Board()
+	}
+
+	init(color, b1, time) {
+		this.colorJugador = color
+		this.tiempo = time
+		this.tamTablero = parseInt(Konekti.vc('size').value)
+		this.movVictoria = parseInt(Konekti.vc('k').value)
+		console.log(color, b1, time);
+	}
+
+	compute(tablero, time) {
+		this.tiempo = time
+		this.movPosibles = this.board.valid_moves(tablero)
+
+		//Logica del programa
+		var startT = Date.now()
+		var mov = this.movPosibles[Math.floor(this.movPosibles.length * Math.random())]
+		for (var i = 0; i < 99999999; i++) { }
+		var endT = Date.now()
+
+		//Prints
+		console.log('Color: ' + this.colorJugador, '\nTiempo: ' + this.tiempo, '\nPosibles: ' + this.movPosibles);
+		console.log('Mejor movimiento: ' + mov);
+		console.log('Tiempo requerido: ' + (endT - startT), 'Tiempo restante: ' + (this.tiempo - (endT - startT)))
+		console.log(tablero);
+		return mov;
+	}
 }
 /*
  * Environment (Cannot be modified or any of its attributes accesed directly)
