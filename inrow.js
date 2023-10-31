@@ -18,6 +18,7 @@ class Agent {
  */
 class Board {
 	constructor() { }
+
 	// Initializes a board of the given size. A board is a matrix of size*size of characters ' ', 'B', or 'W'
 	init(size) {
 		var board = []
@@ -28,6 +29,7 @@ class Board {
 		}
 		return board
 	}
+
 	// Deep clone of a board the reduce risk of damaging the real board
 	clone(board) {
 		var size = board.length
@@ -39,10 +41,12 @@ class Board {
 		}
 		return b
 	}
+
 	// Determines if a piece can be set at column j 
 	check(board, j) {
 		return (board[0][j] == ' ')
 	}
+
 	// Computes all the valid moves for the given 'color'
 	valid_moves(board) {
 		var moves = []
@@ -51,6 +55,7 @@ class Board {
 			if (this.check(board, j)) moves.push(j)
 		return moves
 	}
+
 	// Computes the new board when a piece of 'color' is set at column 'j'
 	// If it is an invalid movement stops the game and declares the other 'color' as winner
 	move(board, j, color) {
@@ -61,6 +66,7 @@ class Board {
 		board[i][j] = color
 		return true
 	}
+
 	// Determines the winner of the game if available 'W': white, 'B': black, ' ': none
 	winner(board, k) {
 		//console.log(k)
@@ -101,6 +107,7 @@ class Board {
 		}
 		return ' '
 	}
+
 	// Draw the board on the canvas
 	print(board) {
 		var size = board.length
@@ -115,38 +122,20 @@ class Board {
 		Konekti.client['canvas'].setText(commands)
 	}
 }
-
-/*
- * Player's Code (Must inherit from Agent) 
- * This is an example of a rangom player agent
- */
-class RandomPlayer extends Agent {
-	constructor() {
-		super()
-		this.board = new Board()
-	}
-
-	compute(board, time) {
-		var moves = this.board.valid_moves(board)
-		var index = Math.floor(moves.length * Math.random())
-		//console.log(this.color + ',' + moves[index])
-		return moves[index]
-	}
-}
-
-class EA_pro extends Agent {
+class EA extends Agent {
 	board;				//Tablero
 	colorJugador;		//Color del jugador
 	movVictoria;		//Fichas en linea  x ganar (k)
 	tamTablero;			//Tamaño tablero
 	movPosibles = [];	//Movimientos posibles
 	tiempo;				//Tiempo disponible
+	tInicial;			//Tiempo inicial
+	ficha;				//Ficha a jugar
 
 	constructor() {
 		super()
 		this.board = new Board()
 	}
-
 	init(color, b1, time) {
 		this.colorJugador = color
 		this.tiempo = time
@@ -154,65 +143,100 @@ class EA_pro extends Agent {
 		this.movVictoria = parseInt(Konekti.vc('k').value)
 		console.log(color, b1, time);
 	}
-
-	compute(tablero, time) {
-		this.tiempo = time
-		this.movPosibles = this.board.valid_moves(tablero)
-
-		//Logica del programa
-		var startT = Date.now()
-		var mov = this.movPosibles[Math.floor(this.movPosibles.length * Math.random())]
-		for (var i = 0; i < 99999999; i++) { }
-		var endT = Date.now()
-
-		//Prints
+	imprimirPrueba(tablero) {
 		console.log('Color: ' + this.colorJugador, '\nTiempo: ' + this.tiempo, '\nPosibles: ' + this.movPosibles);
-		console.log('Mejor movimiento: ' + mov);
-		console.log('Tiempo requerido: ' + (endT - startT), 'Tiempo restante: ' + (this.tiempo - (endT - startT)))
+		console.log('Mejor movimiento: ' + this.ficha);
+		var endT = Date.now();
+		console.log('Tiempo requerido: ' + (endT - this.tInicial), 'Tiempo restante: ' + (this.tiempo - (endT - this.tInicial)))
 		console.log(tablero);
-		return mov;
+		console.log('-------------------------------------------------------------------------');
+
+	}
+	validarFinales(tablero, color, movimientos) {
+		//Verifica en cada movimiento si es posible la victoria
+		let valorFinal = -1
+		movimientos.forEach(valor => {
+			var tableroAux = this.board.clone(tablero)
+			this.board.move(tableroAux, valor, color)
+			if (this.board.winner(tableroAux, this.movVictoria) == color) {
+				valorFinal = valor;
+			}
+		});
+		if (valorFinal != -1) {
+			return valorFinal;
+		}
+		return -1;
+	}
+	aleatorio() {
+		return this.movPosibles[Math.floor(this.movPosibles.length * Math.random())];
+	}
+	bloquear(tablero) {
+		let jugada = -1;
+		//Busca jugadas finales propias en el proximo turno
+		jugada = this.validarFinales(tablero, this.colorJugador, this.movPosibles);
+		if (jugada != -1) {
+			//console.log('Movimiento ganador a ejecutar: ' + jugada);
+			return jugada;
+		}
+
+		//Busca jugadas finales del oponente en el proximo turno
+		jugada = this.validarFinales(tablero, this.colorJugador == 'W' ? 'B' : 'W', this.movPosibles);
+		if (jugada != -1) {
+			//console.log('Movimiento bloqueante a ejecutar: ' + jugada);
+			return jugada;
+		}
+		return jugada;
+	}
+	iniciarJugada(tablero, time) {
+		this.tiempo = time;
+		this.tInicial = Date.now();
+		this.ficha = -1;
+		this.movPosibles = this.board.valid_moves(tablero);
 	}
 }
 
-class EA_random extends Agent {
-	board;				//Tablero
-	colorJugador;		//Color del jugador
-	movVictoria;		//Fichas en linea  x ganar (k)
-	tamTablero;			//Tamaño tablero
-	movPosibles = [];	//Movimientos posibles
-	tiempo;				//Tiempo disponible
-
+class EA_pro extends EA {
 	constructor() {
 		super()
-		this.board = new Board()
 	}
-
-	init(color, b1, time) {
-		this.colorJugador = color
-		this.tiempo = time
-		this.tamTablero = parseInt(Konekti.vc('size').value)
-		this.movVictoria = parseInt(Konekti.vc('k').value)
-		console.log(color, b1, time);
-	}
-
 	compute(tablero, time) {
-		this.tiempo = time
-		this.movPosibles = this.board.valid_moves(tablero)
-
-		//Logica del programa
-		var startT = Date.now()
-		var mov = this.movPosibles[Math.floor(this.movPosibles.length * Math.random())]
-		for (var i = 0; i < 99999999; i++) { }
-		var endT = Date.now()
-
-		//Prints
-		console.log('Color: ' + this.colorJugador, '\nTiempo: ' + this.tiempo, '\nPosibles: ' + this.movPosibles);
-		console.log('Mejor movimiento: ' + mov);
-		console.log('Tiempo requerido: ' + (endT - startT), 'Tiempo restante: ' + (this.tiempo - (endT - startT)))
-		console.log(tablero);
-		return mov;
+		this.iniciarJugada(tablero, time)
+		this.ficha = this.bloquear(tablero);
+		if (this.ficha == -1) {
+			this.ficha = this.aleatorio();
+		}
+		//this.imprimirPrueba(tablero)
+		return this.ficha;
 	}
 }
+
+class EA_bloqueante extends EA {
+	constructor() {
+		super()
+	}
+	compute(tablero, time) {
+		this.iniciarJugada(tablero, time)
+		this.ficha = this.bloquear(tablero);
+		if (this.ficha == -1) {
+			this.ficha = this.aleatorio();
+		}
+		this.imprimirPrueba(tablero)
+		return this.ficha;
+	}
+}
+
+class EA_random extends EA {
+	constructor() {
+		super()
+	}
+	compute(tablero, time) {
+		this.iniciarJugada(tablero, time)
+		this.ficha = this.aleatorio();
+		//this.imprimirPrueba(tablero)
+		return this.ficha;
+	}
+}
+
 /*
  * Environment (Cannot be modified or any of its attributes accesed directly)
  */
@@ -285,16 +309,17 @@ class Environment extends MainClient {
 			start = Date.now()
 			var action = x.players[id].compute(b, x.ptime[x.player])
 			var end = Date.now()
+			//for (var i = 0; i < 999999999; i++) { }
 			var flag = board.move(x.rb, action, x.player)
-			for (let i = 0; i < 999999999; i++) { }
 			if (!flag) {
 				x.winner = nid + ' ...Invalid move taken by ' + id + ' on column ' + action
 			} else {
 				var winner = board.winner(x.rb, x.k)
 				if (winner != ' ') {
 					x.winner = winner
-					console.log("El ganador es: " + winner)
-				} else {
+					console.log('El ganador es: ' + winner)
+				}
+				else {
 					var ellapsed = end - start
 					x.ptime[x.player] -= ellapsed
 					Konekti.vc(x.player + '_time').innerHTML = '' + x.ptime[x.player]
@@ -311,12 +336,12 @@ class Environment extends MainClient {
 			if (x.winner == '') setTimeout(compute, TIME)
 			else Konekti.vc('log').innerHTML = 'The winner is ' + x.winner
 		}
+
 		board.print(x.rb)
 		setTimeout(clock, 1000)
 		setTimeout(compute, 1000)
 	}
 }
-
 // Drawing commands
 function custom_commands() {
 	return [

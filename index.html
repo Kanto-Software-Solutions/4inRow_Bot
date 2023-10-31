@@ -16,7 +16,6 @@
 </head>
 
 <body>
-
 	<script>
 		Konekti.uses('header', 'navbar', 'canvas')
 		// Main function using the Konekti infrastructure
@@ -24,7 +23,7 @@
 			var client = new Environment()
 			client.setPlayers({
 				'ea_random': new EA_random(),
-				'ea_pro': new EA_pro()
+				'ea_pro': new EA_bloqueante()
 			})
 			Konekti.header('title', '', 'Reversi', 3, { 'class': 'w3-black w3-center' })
 			Konekti.raw('log', 'The winner is...')
