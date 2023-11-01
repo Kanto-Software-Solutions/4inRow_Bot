@@ -271,64 +271,75 @@ class EA extends Agent {
 		let jugador = this.colorJugador;
 		let rival = this.colorJugador == 'W' ? 'B' : 'W';
 
-		let mejorMovimiento = this.movPosibles[Math.floor(this.movPosibles.length * Math.random())];
-		let victoria = this.board.winner(tablero, this.movVictoria);
+		let mejorMovimiento = -1;
 		let valor = maximizar ? -999 : 999;
+		let temp = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
 
+		let victoria = this.board.winner(tablero, this.movVictoria);
+
+		let terminal = victoria != ' ' || movimientos.length == 0;
 		//Verifica condiciones de fin de juego
-		if (victoria == jugador) {
-			//Si nosotros ganamos
-			valor = 100;
-			//console.log('Victoria ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar);
-			//console.log(tablero);
-			return [columna, valor];
-		} else if (victoria == rival) {
-			//Si gana el rival
-			valor = -1000;
-			//console.log('Derrota ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar);
-			//console.log(tablero);
-			return [columna, valor];
-		} else if (movimientos.length == 0) {
-			//Si es empate
-			valor = 0;
-			//console.log('No hay mov Disponibles: ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar);
-			//console.log(tablero);
-			return [columna, valor];
-		} else if (profundidad <= 0) {
-			//Llega a la profundidad maxima
-			valor = this.evaluarPuntaje(tablero, jugador, rival, columna, maximizar);
-			//console.log('Profundidad maxima alcanzada: ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar);
-			//console.log(tablero);
-			return [columna, valor];
+		if (terminal || profundidad <= 0) {
+			if (terminal) {
+				if (victoria == jugador) {
+					//Si nosotros ganamos
+					valor = 100;
+					console.log('Victoria ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar);
+					return [columna, valor];
+				} else if (victoria == rival) {
+					//Si gana el rival
+					valor = -100;
+					console.log('Derrota ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar);
+					return [columna, valor];
+				} else {
+					//Si es empate
+					valor = 0;
+					console.log('No hay mov Disponibles: ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar);
+					return [columna, valor];
+				}
+			} else {
+				//Llega a la profundidad maxima
+				valor = this.evaluarPuntaje(tablero, jugador, rival, columna, maximizar);
+				console.log('Profundidad alcanzada: ' + profundidad + ' con valor: ' + valor + ' MAX: ' + maximizar, ' en col '+ columna);
+				return [columna, valor];
+			}
 		}
-		let temp = [0, 0, 0, 0, 0, 0, 0];
-
+		//Logica minmax
 		for (let i = 0; i < movimientos.length; i++) {
 			let movimiento = movimientos[i];
 			let tableroAux = this.board.clone(tablero);
 			this.board.move(tableroAux, movimiento, maximizar ? jugador : rival);
-			let respuesta = this.mmDeep(tableroAux, profundidad - 1, alpha, beta, maximizar ? false : true, movimiento);
-			let newValor = respuesta[1]
-			
-			temp[i] = [newValor,mejorMovimiento];
+			//console.log(tableroAux)
+
+			let resultado = this.mmDeep(tableroAux, profundidad - 1, alpha, beta, maximizar ? false : true, movimiento);
+			let columna = resultado[0];
+			let puntaje = resultado[1];
+			temp[i] = [columna, puntaje];
+
 			if (maximizar) {
-				if (newValor > valor) {
-					valor = newValor;
-					mejorMovimiento = respuesta[0]
+				if (puntaje > valor) {
+					valor = puntaje;
+					mejorMovimiento = movimiento;
 				}
 				alpha = Math.max(alpha, valor);
 			} else {
-				if (newValor < valor) {
-					valor = newValor;
-					mejorMovimiento = movimiento
+				if (puntaje < valor) {
+					valor = puntaje;
+					mejorMovimiento = movimiento;
 				}
 				beta = Math.min(beta, valor);
 			}
 			if (alpha >= beta) {
 				break;
 			}
-		};
-		//console.log(temp + ' MAX: ' + maximizar + ' Profundidad: ' + profundidad);
+		}
+		let st ="";
+		temp.forEach(element => {
+			st += element[0] + ',' + element[1] + ' | ';
+		});
+
+		console.log('Lista: [' + st + '] ' + profundidad);
+		console.log('Mejor movimiento: ' + mejorMovimiento + ' con valor: ' + valor + ' MAX: ' + maximizar);
 		return [mejorMovimiento, valor];
 	}
 }
@@ -339,22 +350,24 @@ class EA_deep extends EA {
 	}
 	compute(tablero, time) {
 		this.iniciarJugada(tablero, time)
-		if (this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2) - 1 || this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2) - 2) {
+		/*if (this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2) - 1 || this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2) - 2) {
 			this.ficha = Math.floor(this.tamTablero / 2);
 			//console.log('CENTRO SELECCIONADO: ' + this.ficha);
 		} else {
-			this.ficha = this.bloquear(tablero);
-			if (this.ficha == -1) {
-				let resultado = this.mmDeep(tablero, 7, -999, 999, true, 0);
-				this.ficha = resultado[0];
-				//console.log('MinMax ' + this.ficha + ' con valor: ' + resultado[1]);
-			} else {
-				//console.log('BLOQUEADOR: ' + this.ficha);
-			}
+		
+		}
+		*/
+		this.ficha = this.bloquear(tablero);
+		if (this.ficha == -1) {
+			let resultado = this.mmDeep(tablero, 5, -999, 999, true, 0);
+			this.ficha = resultado[0];
+			console.log('MinMax ' + this.ficha + ' con valor: ' + resultado[1]);
+		} else {
+			console.log('BLOQUEADOR: ' + this.ficha);
 		}
 		//Random por si acaso
 		if (this.ficha == -1) {
-			//console.log('RANDOM SELECCIONADO: ' + this.ficha);
+			console.log('RANDOM SELECCIONADO: ' + this.ficha);
 			//alert('RANDOM SELECCIONADO: ' + this.ficha);
 			this.ficha = this.aleatorio();
 		}
