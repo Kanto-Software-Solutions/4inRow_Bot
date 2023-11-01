@@ -196,71 +196,86 @@ class EA extends Agent {
 		this.movPosibles = this.board.valid_moves(tablero);
 		this.movRestantes--;
 	}
-	minmax(tablero, profundidad, alpha, betha, maximizar) {
+	minmax(tablero, profundidad, alpha, beta, maximizar) {
 		let movimientos = this.board.valid_moves(tablero);
 
-		let jugador	=this.colorJugador;
-		let rival	=this.colorJugador == 'W' ? 'B' : 'W';
+		let jugador = this.colorJugador;
+		let rival = this.colorJugador == 'W' ? 'B' : 'W';
 
 		let mejorMovimiento = -1;
 		let victoria = this.board.winner(tablero, this.movVictoria);
 		let valor = maximizar ? -999 : 999;
-		
+
 		//Verifica condiciones de fin de juego
 		if (victoria == jugador) {
 			//Si nosotros ganamos
 			valor = 100;
-			console.log('Victoria con valor: ' + valor + ' Profundidad: ' + profundidad, ' MAX: ' + maximizar);
-			console.log(tablero);
-			return mejorMovimiento, valor;
+			//console.log('Victoria con valor: ' + valor + ' Profundidad: ' + profundidad, ' MAX: ' + maximizar);
+			//console.log(tablero);
+			return [mejorMovimiento, valor];
 		} else if (victoria == rival) {
 			//Si gana el rival
 			valor = -100;
-			console.log('Derrota con valor: ' + valor + ' Profundidad: ' + profundidad, ' MAX: ' + maximizar);
-			console.log(tablero);
-			return mejorMovimiento, valor;
+			//console.log('Derrota con valor: ' + valor + ' Profundidad: ' + profundidad, ' MAX: ' + maximizar);
+			//console.log(tablero);
+			return [mejorMovimiento, valor];
 		} else if (movimientos.length == 0) {
 			//Si es empate
 			valor = 0;
-			console.log('Empate con valor: ' + valor + ' Profundidad: ' + profundidad, ' MAX: ' + maximizar);
-			console.log(tablero);
-			return mejorMovimiento, valor;
+			//console.log('Empate con valor: ' + valor + ' Profundidad: ' + profundidad, ' MAX: ' + maximizar);
+			//console.log(tablero);
+			return [mejorMovimiento, valor];
 		}
 
 		for (let i = 0; i < movimientos.length; i++) {
 
 			let movimiento = movimientos[i];
-			console.log('Val ' + i + ' Movimiento: ' + movimiento + ' Profundidad: ' + profundidad, 'MAX: ' + maximizar);
-
 			let tableroAux = this.board.clone(tablero);
 			this.board.move(tableroAux, movimiento, maximizar ? jugador : rival);
-			console.log(tableroAux);
 
-			let newValor = this.minmax(tableroAux, profundidad + 1, alpha, betha, maximizar ? false : true)[1];
-
+			let newValor = this.minmax(tableroAux, profundidad + 1,alpha,beta,  maximizar ? false : true)[1];
 			if (maximizar) {
 				if (newValor > valor) {
-					console.log('Si entra :v');
 					valor = newValor;
 					mejorMovimiento = movimiento;
 				}
-				alpha = Math.max(alpha, newValor);
+				alpha = Math.max(alpha, valor);
+				
 			} else {
 				if (newValor < valor) {
 					valor = newValor;
 					mejorMovimiento = movimiento;
 				}
-				betha = Math.min(betha, newValor);
+				beta = Math.min(beta, valor);
 			}
-			if (betha >= alpha) {
+			if (beta <= alpha) {
 				break;
 			}
 		};
 		console.log('Mejor movimiento: ' + mejorMovimiento + ' con valor: ' + valor + ' Profundidad: ' + profundidad, 'MAX: ' + maximizar);
-		return mejorMovimiento, valor;
+		return [mejorMovimiento, valor];
 	}
 }
 
+class EA_deep extends EA {
+	constructor() {
+		super()
+	}
+	compute(tablero, time) {
+		this.iniciarJugada(tablero, time)
+		this.ficha = this.bloquear(tablero);
+		//Logica minmax
+		if (this.ficha == -1) {
+			this.ficha = this.minmax(tablero, 0, -Infinity, Infinity, true)[0];
+		}
+		if (this.ficha == -1) {
+			this.ficha = this.aleatorio();
+		}
+		this.imprimirPrueba(tablero)
+		return this.ficha;
+	}
+}
+//Solo hasta con 4 * 4
 class EA_minmax extends EA {
 	constructor() {
 		super()
@@ -269,7 +284,9 @@ class EA_minmax extends EA {
 		this.iniciarJugada(tablero, time)
 		this.ficha = this.bloquear(tablero);
 		//Logica minmax
-		this.ficha = this.minmax(tablero, 0, -Infinity, Infinity, true)[0];
+		if (this.ficha == -1) {
+			this.ficha = this.minmax(tablero, 0, -Infinity, Infinity, true)[0];
+		}
 		if (this.ficha == -1) {
 			this.ficha = this.aleatorio();
 		}
@@ -278,6 +295,7 @@ class EA_minmax extends EA {
 	}
 }
 
+//No mira fuyuros movimientos
 class EA_bloqueante extends EA {
 	constructor() {
 		super()
@@ -288,11 +306,12 @@ class EA_bloqueante extends EA {
 		if (this.ficha == -1) {
 			this.ficha = this.aleatorio();
 		}
-		this.imprimirPrueba(tablero)
+		//this.imprimirPrueba(tablero)
 		return this.ficha;
 	}
 }
 
+//Aleatorio
 class EA_random extends EA {
 	constructor() {
 		super()
@@ -377,7 +396,7 @@ class Environment extends MainClient {
 			start = Date.now()
 			var action = x.players[id].compute(b, x.ptime[x.player])
 			var end = Date.now()
-			for (var i = 0; i < 799999999; i++) { }
+			//for (var i = 0; i < 799999999; i++) { }
 			var flag = board.move(x.rb, action, x.player)
 			if (!flag) {
 				x.winner = nid + ' ...Invalid move taken by ' + id + ' on column ' + action
