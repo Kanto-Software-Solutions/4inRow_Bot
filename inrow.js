@@ -260,7 +260,7 @@ class EA extends Agent {
 			puntaje += 20;
 		}
 		//Asegurar centro
-		if(col == Math.floor(this.tamTablero/2)){
+		if (col == Math.floor(this.tamTablero / 2)) {
 			puntaje += 50;
 		}
 		return puntaje;
@@ -318,10 +318,10 @@ class EA extends Agent {
 				break;
 			}
 		};
-		if(profundidad == 6){
+		if (profundidad == 6) {
 			console.log(temp + ' MAX: ' + maximizar);
 		}
-		if(profundidad == 7){
+		if (profundidad == 7) {
 			console.log(temp + ' MAX: ' + maximizar);
 		}
 		return [mejorMovimiento, valor];
@@ -334,10 +334,10 @@ class EA_deep extends EA {
 	}
 	compute(tablero, time) {
 		this.iniciarJugada(tablero, time)
-		if(this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2)-1){
-			this.ficha = Math.floor(this.tamTablero/2);
+		if (this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2) - 1 || this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2) - 2) {
+			this.ficha = Math.floor(this.tamTablero / 2);
 			console.log('CENTRO SELECCIONADO: ' + this.ficha);
-		}else{
+		} else {
 			this.ficha = this.bloquear(tablero);
 		}
 
@@ -346,7 +346,7 @@ class EA_deep extends EA {
 			let resultado = this.mmDeep(tablero, 7, -999, 999, true, 0);
 			this.ficha = resultado[0];
 			console.log('MinMax ' + this.ficha + ' con valor: ' + resultado[1]);
-		}else{
+		} else {
 			console.log('BLOQUEADOR: ' + this.ficha);
 		}
 		//Random por si acaso
