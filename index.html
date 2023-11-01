@@ -22,8 +22,8 @@
 		function KonektiMain() {
 			var client = new Environment()
 			client.setPlayers({
-				'ea_random': new EA_random(),
-				'ea_pro': new EA_bloqueante()
+				'bot-1': new EA_minmax(),
+				'bot-2': new EA_random()
 			})
 			Konekti.header('title', '', 'Reversi', 3, { 'class': 'w3-black w3-center' })
 			Konekti.raw('log', 'The winner is...')
@@ -39,14 +39,14 @@
 				{
 					'plugin': 'raw', 'setup': ["size", '', {
 						'tag': 'input', 'width': '150px', 'class': "w3-bar-item w3-input w3-border w3-round-xlarge",
-						'value': 7,
+						'value': 5,
 						'placeholder': "&#xf00a; Size", 'style': "margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"
 					}]
 				},
 				{
 					'plugin': 'raw', 'setup': ["k", '', {
 						'tag': 'input', 'width': '150px', 'class': "w3-bar-item w3-input w3-border w3-round-xlarge",
-						'value': 4,
+						'value': 3,
 						'placeholder': "&#xf141; k", 'style': "margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"
 					}]
 				},
@@ -60,7 +60,7 @@
 				{
 					'plugin': 'raw', 'setup': ["W", '', {
 						'tag': 'input', 'width': '150px', 'class': "w3-bar-item w3-input w3-border w3-round-xlarge",
-						'value': 'ea_random',
+						'value': 'bot-1',
 						'placeholder': "&#xf10c; White", 'style': "margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"
 					}]
 				},
@@ -73,7 +73,7 @@
 				{
 					'plugin': 'raw', 'setup': ["B", '', {
 						'tag': 'input', 'width': '150px', 'class': "w3-bar-item w3-input w3-border w3-round-xlarge",
-						'value': 'ea_pro',
+						'value': 'bot-2',
 						'placeholder': "&#xf111; Black", 'style': "margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"
 					}]
 				},
