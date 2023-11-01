@@ -177,14 +177,11 @@ class EA extends Agent {
 		//Busca jugadas finales propias en el proximo turno
 		jugada = this.validarFinales(tablero, this.colorJugador, this.movPosibles);
 		if (jugada != -1) {
-			console.log('Movimiento ganador de ' + this.colorJugador + ' a ejecutar: ' + jugada);
 			return jugada;
 		}
-
 		//Busca jugadas finales del oponente en el proximo turno
 		jugada = this.validarFinales(tablero, this.colorJugador == 'W' ? 'B' : 'W', this.movPosibles);
 		if (jugada != -1) {
-			console.log('Movimiento bloqueante de ' + this.colorJugador + ' a ejecutar: ' + jugada);
 			return jugada;
 		}
 		return jugada;
@@ -233,14 +230,14 @@ class EA extends Agent {
 			let tableroAux = this.board.clone(tablero);
 			this.board.move(tableroAux, movimiento, maximizar ? jugador : rival);
 
-			let newValor = this.minmax(tableroAux, profundidad + 1,alpha,beta,  maximizar ? false : true)[1];
+			let newValor = this.minmax(tableroAux, profundidad + 1, alpha, beta, maximizar ? false : true)[1];
 			if (maximizar) {
 				if (newValor > valor) {
 					valor = newValor;
 					mejorMovimiento = movimiento;
 				}
 				alpha = Math.max(alpha, valor);
-				
+
 			} else {
 				if (newValor < valor) {
 					valor = newValor;
@@ -248,11 +245,85 @@ class EA extends Agent {
 				}
 				beta = Math.min(beta, valor);
 			}
-			if (beta <= alpha) {
+			if (alpha >= beta) {
+				//console.log('Corte alfa beta');
 				break;
 			}
 		};
 		console.log('Mejor movimiento: ' + mejorMovimiento + ' con valor: ' + valor + ' Profundidad: ' + profundidad, 'MAX: ' + maximizar);
+		return [mejorMovimiento, valor];
+	}
+	evaluarPuntaje(tablero, jugador, rival, col, maximizar) {
+		let puntaje = 0;
+		//Mov que completan lineas
+		if (jugador == this.board.winner(tablero, this.movVictoria - 1)) {
+			puntaje += 20;
+		}
+		//Asegurar centro
+		if(col == Math.floor(this.tamTablero/2)){
+			puntaje += 50;
+		}
+		return puntaje;
+	}
+	mmDeep(tablero, profundidad, alpha, beta, maximizar, columna) {
+		let movimientos = this.board.valid_moves(tablero);
+
+		let jugador = this.colorJugador;
+		let rival = this.colorJugador == 'W' ? 'B' : 'W';
+
+		let mejorMovimiento = -1;
+		let victoria = this.board.winner(tablero, this.movVictoria);
+		let valor = maximizar ? -999 : 999;
+
+		//Verifica condiciones de fin de juego
+		if (victoria == jugador) {
+			//Si nosotros ganamos
+			valor = 100;
+			return [mejorMovimiento, valor];
+		} else if (victoria == rival) {
+			//Si gana el rival
+			valor = -100;
+			return [mejorMovimiento, valor];
+		} else if (movimientos.length == 0) {
+			//Si es empate
+			valor = 0;
+			return [mejorMovimiento, valor];
+		} else if (profundidad <= 0) {
+			//Llega a la profundidad maxima
+			valor = this.evaluarPuntaje(tablero, jugador, rival, columna, maximizar);
+			return [mejorMovimiento, valor];
+		}
+		let temp = [0, 0, 0, 0, 0, 0, 0];
+
+		for (let i = 0; i < movimientos.length; i++) {
+			let movimiento = movimientos[i];
+			let tableroAux = this.board.clone(tablero);
+			this.board.move(tableroAux, movimiento, maximizar ? jugador : rival);
+			let newValor = this.mmDeep(tableroAux, profundidad - 1, alpha, beta, maximizar ? false : true, movimiento)[1];
+			temp[i] = newValor;
+			if (maximizar) {
+				if (newValor >= valor) {
+					valor = newValor;
+					mejorMovimiento = movimiento;
+				}
+				alpha = Math.max(alpha, valor);
+			} else {
+				if (newValor <= valor) {
+					valor = newValor;
+					mejorMovimiento = movimiento;
+				}
+				beta = Math.min(beta, valor);
+			}
+			if (alpha >= beta) {
+				break;
+			}
+		};
+		if(profundidad == 6){
+			console.log(temp + ' MAX: ' + maximizar);
+		}
+		if(profundidad == 7){
+			console.log(temp + ' MAX: ' + maximizar);
+		}
 		return [mejorMovimiento, valor];
 	}
 }
@@ -263,19 +334,32 @@ class EA_deep extends EA {
 	}
 	compute(tablero, time) {
 		this.iniciarJugada(tablero, time)
-		this.ficha = this.bloquear(tablero);
+		if(this.movRestantes == Math.floor(this.tamTablero * this.tamTablero / 2)-1){
+			this.ficha = Math.floor(this.tamTablero/2);
+			console.log('CENTRO SELECCIONADO: ' + this.ficha);
+		}else{
+			this.ficha = this.bloquear(tablero);
+		}
+
 		//Logica minmax
 		if (this.ficha == -1) {
-			this.ficha = this.minmax(tablero, 0, -Infinity, Infinity, true)[0];
+			let resultado = this.mmDeep(tablero, 7, -999, 999, true, 0);
+			this.ficha = resultado[0];
+			console.log('MinMax ' + this.ficha + ' con valor: ' + resultado[1]);
+		}else{
+			console.log('BLOQUEADOR: ' + this.ficha);
 		}
+		//Random por si acaso
 		if (this.ficha == -1) {
+			console.log('RANDOM SELECCIONADO: ' + this.ficha);
+			alert('RANDOM SELECCIONADO: ' + this.ficha);
 			this.ficha = this.aleatorio();
 		}
-		this.imprimirPrueba(tablero)
+		//this.imprimirPrueba(tablero)
 		return this.ficha;
 	}
 }
-//Solo hasta con 4 * 4
+//Solo funciona hasta con 4 * 4
 class EA_minmax extends EA {
 	constructor() {
 		super()
@@ -290,12 +374,11 @@ class EA_minmax extends EA {
 		if (this.ficha == -1) {
 			this.ficha = this.aleatorio();
 		}
-		this.imprimirPrueba(tablero)
+		//this.imprimirPrueba(tablero)
 		return this.ficha;
 	}
 }
-
-//No mira fuyuros movimientos
+//No mira futuros movimientos
 class EA_bloqueante extends EA {
 	constructor() {
 		super()
@@ -310,7 +393,6 @@ class EA_bloqueante extends EA {
 		return this.ficha;
 	}
 }
-
 //Aleatorio
 class EA_random extends EA {
 	constructor() {
@@ -396,7 +478,6 @@ class Environment extends MainClient {
 			start = Date.now()
 			var action = x.players[id].compute(b, x.ptime[x.player])
 			var end = Date.now()
-			//for (var i = 0; i < 799999999; i++) { }
 			var flag = board.move(x.rb, action, x.player)
 			if (!flag) {
 				x.winner = nid + ' ...Invalid move taken by ' + id + ' on column ' + action

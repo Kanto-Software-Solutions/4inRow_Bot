@@ -22,8 +22,8 @@
 		function KonektiMain() {
 			var client = new Environment()
 			client.setPlayers({
-				'bot-1': new EA_minmax(),
-				'bot-2': new EA_minmax()
+				'bot-1': new EA_deep(),
+				'bot-2': new EA_bloqueante()
 			})
 			Konekti.header('title', '', 'Reversi', 3, { 'class': 'w3-black w3-center' })
 			Konekti.raw('log', 'The winner is...')
@@ -39,14 +39,14 @@
 				{
 					'plugin': 'raw', 'setup': ["size", '', {
 						'tag': 'input', 'width': '150px', 'class': "w3-bar-item w3-input w3-border w3-round-xlarge",
-						'value': 4,
+						'value': 7,
 						'placeholder': "&#xf00a; Size", 'style': "margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"
 					}]
 				},
 				{
 					'plugin': 'raw', 'setup': ["k", '', {
 						'tag': 'input', 'width': '150px', 'class': "w3-bar-item w3-input w3-border w3-round-xlarge",
-						'value': 3,
+						'value': 4,
 						'placeholder': "&#xf141; k", 'style': "margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"
 					}]
 				},
